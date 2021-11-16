@@ -15,6 +15,7 @@ import {
 
 import Regiao from './pages/regiao';
 import Salas from './pages/salas';
+import RegionRequirement from './pages/regionRequirement';
 import Usuarios from './pages/usuarios';
 
 function App() {
@@ -44,6 +45,7 @@ function App() {
           <Route path="/regiao" element={<Regiao />}></Route>
           <Route path="/salas" element={<Salas  />}></Route>
           <Route path="/salas/:regiao" element={<Salas  />}></Route>
+          <Route path="/salas-solicitadas" element={<RegionRequirement  />}></Route>
           <Route path="/usuarios" element={<Usuarios  />}></Route>
         </Routes>
       </Router>

@@ -12,21 +12,27 @@ import {
     TableCell,
     Paper,
     IconButton,
+    FormControl,
+    MenuItem,
+    InputLabel,
   } from "@mui/material";
   import DeleteIcon from '@mui/icons-material/Delete';
-  import {useParams} from 'react-router-dom'
-
-// import { Container } from './styles';
+  import {useParams} from 'react-router-dom';
+  import Select, { SelectChangeEvent } from '@mui/material/Select';
 
 const Salas = () => {
 
     const { regiao } = useParams()
 
-
+    const [currentRegion, setCurrentRegion] = useState("");
     const [roomName, setRoomName] = useState("");
     const [roomActive, setRoomActive] = useState(true);
-  
+    const [regions, setRegions] = useState<any>([]);
     const [rooms, setRooms] = useState<any>([])
+
+    const handleChange = (event: SelectChangeEvent) => {
+      setCurrentRegion(event.target.value);
+    };
 
     async function fetchRooms() {
       if(!regiao) {
@@ -42,6 +48,31 @@ const Salas = () => {
       }
   }
 
+  async function updateRoomActivation(room: string, region: string, active: boolean){
+    await FirebaseService.updateRoomActivation({
+      uid: region + ' - ' + room,
+      active: active,
+    })
+    fetchRooms()
+  }
+
+  async function fetchRegions() {
+    const data = await FirebaseService.getAll({
+      collection: 'regions'
+    }) as Array<any>
+    setRegions(data[0].regions)
+  }
+
+    async function createRooms() {
+      await FirebaseService.createRoom({
+          name: roomName,
+          region: currentRegion??regiao,
+          active: roomActive,
+        })
+      fetchRooms()
+    }
+
+    
   async function deleteRoom(roomName: string, regionName: string) {
     await FirebaseService.deleteRoom({
         room: roomName,
@@ -51,10 +82,9 @@ const Salas = () => {
   }
 
   useEffect(() => {
+    fetchRegions()
     fetchRooms()
   }, [])
-
-  console.log(rooms)
 
   return (
       <div>
@@ -63,39 +93,36 @@ const Salas = () => {
         (e) => setRoomName(e.target.value)
       }></input>
       <br></br>
+      <FormControl variant="standard" sx={{ m: 1, minWidth: 120 }}>
+        <InputLabel id="demo-simple-select-standard-label">Region</InputLabel>
+        <Select
+          labelId="demo-simple-select-standard-label"
+          id="demo-simple-select-standard"
+          value={currentRegion}
+          onChange={handleChange}
+          label="Age"
+        >
+          {regions?.map((region: any, idx: number) => (
+              <MenuItem value={region}>{region}</MenuItem>
+          ))}
+        </Select>
+      </FormControl>
+      <br></br>
       <span> Room Active: </span><input type="checkbox" checked={roomActive} onChange={
         (e) => setRoomActive(e.target.checked)
       }></input>
       <br></br>
 
       <br></br>
-      <button onClick={fetchRooms}>
-        getAllRooms
+      <button onClick={createRooms}>
+        Create Room
       </button>
       { /*
-      <button onClick={() => FirebaseService.getRoomsFromRegion({
-        region: regionName,
-      }).then(k => console.log(k))}>
-        getRoomsFromRegion
-      </button>
-      <button onClick={() => FirebaseService.createRoom({
-        name: roomName,
-        region: regionName,
-        active: roomActive,
-      }).then(k => console.log(k))}>
-        createRoom
-      </button>
       <button onClick={() => FirebaseService.updateRoomActivation({
         uid: regionName + ' - ' + roomName,
         active: roomActive,
       }).then(k => console.log(k))}>
         updateRoomActivation
-      </button>
-      <button onClick={() => FirebaseService.deleteRoom({
-        room: roomName,
-        region: regionName,
-      }).then(k => console.log(k))}>
-        deleteRoom
       </button>
     */ }
       <br></br>
@@ -123,7 +150,8 @@ const Salas = () => {
                 {room.region}
                 </TableCell>
                 <TableCell>
-                <input type="checkbox" checked={room.active} onChange={(e) => setRoomActive(e.target.checked)}></input>
+                {/* @ts-ignore */}
+                <input type="checkbox" checked={room.active} onChange={(e) => updateRoomActivation(room.name, room.region, e.target.checked)}></input>
                 </TableCell>
                 <TableCell>
                 <IconButton onClick={() => deleteRoom(`${room.name}`,`${room.region}`)} color="primary" aria-label="upload picture" component="span">
